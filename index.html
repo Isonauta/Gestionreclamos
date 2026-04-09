@@ -160,7 +160,7 @@
     <div class="brand-logo">Procesus <span>IA</span></div>
     <div class="brand-mod">Plataforma de Reclamos Inteligente</div>
   </div>
-  <div><span class="tbadge b-iso">ISO 9001:2015</span><span class="tbadge b-demo">DEMO</span></div>
+  <div><span class="tbadge b-demo">DEMO</span></div>
 </div>
 
 <div class="layout">
@@ -297,13 +297,50 @@
             <div class="ract">
               <button class="bapp" onclick="aprobar()">✓ Aprobar y enviar al cliente</button>
               <button class="bpdf" onclick="exportPDF()">↓ Descargar informe PDF</button>
-              <button class="bedit">Editar manualmente</button>
+              <button class="bedit" onclick="abrirEditor()">Editar manualmente</button>
             </div>
           </div>
         </div>
       </div>
     </div>
 
+  </div>
+</div>
+
+<style>
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+  .modal-box{background:#0d2137;border:1px solid rgba(0,170,204,.25);border-radius:12px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto}
+  .modal-hdr{padding:16px 20px;border-bottom:1px solid rgba(0,170,204,.15);display:flex;align-items:center;justify-content:space-between}
+  .modal-title{font-family:'Fraunces',serif;font-size:16px;font-weight:300;color:#fff}
+  .modal-close{background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1}
+  .modal-body{padding:20px;display:flex;flex-direction:column;gap:14px}
+  .modal-footer{padding:14px 20px;border-top:1px solid rgba(0,170,204,.15);display:flex;gap:10px;justify-content:flex-end}
+  .ed-lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;display:block}
+  .ed-ta{width:100%;background:rgba(8,25,41,.7);border:1px solid rgba(0,170,204,.2);border-radius:6px;padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:12px;color:#fff;outline:none;resize:vertical;line-height:1.5}
+  .ed-ta:focus{border-color:rgba(0,170,204,.5)}
+  .ed-grid{display:grid;grid-template-columns:1fr;gap:10px}
+</style>
+
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <div class="modal-title">Editar análisis manualmente</div>
+      <button class="modal-close" onclick="cerrarEditor()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div><label class="ed-lbl">Causa raíz</label><textarea class="ed-ta" id="ed-causa" rows="3"></textarea></div>
+      <div><label class="ed-lbl">Corrección inmediata</label><textarea class="ed-ta" id="ed-correccion" rows="3"></textarea></div>
+      <div><label class="ed-lbl">Acción correctiva A1</label><textarea class="ed-ta" id="ed-a1" rows="2"></textarea></div>
+      <div><label class="ed-lbl">Acción correctiva A2</label><textarea class="ed-ta" id="ed-a2" rows="2"></textarea></div>
+      <div><label class="ed-lbl">Acción correctiva A3</label><textarea class="ed-ta" id="ed-a3" rows="2"></textarea></div>
+      <div><label class="ed-lbl">Verificación de eficacia</label><textarea class="ed-ta" id="ed-verificacion" rows="2"></textarea></div>
+      <div><label class="ed-lbl">Impacto comercial estimado</label><textarea class="ed-ta" id="ed-impacto" rows="2"></textarea></div>
+      <div><label class="ed-lbl">Borrador de respuesta al cliente</label><textarea class="ed-ta" id="ed-borrador" rows="5"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="bg" onclick="cerrarEditor()">Cancelar</button>
+      <button class="bp" onclick="guardarEdicion()">Guardar cambios</button>
+    </div>
   </div>
 </div>
 
@@ -495,6 +532,40 @@ Responde SOLO en JSON válido:
     if(!win){toast('Permite ventanas emergentes',false);return}
     win.document.write(html);win.document.close();win.focus();
     setTimeout(()=>win.print(),700);
+  }
+
+  function abrirEditor() {
+    if(!result) return;
+    const modal = document.getElementById('edit-modal');
+    document.getElementById('ed-causa').value = result.causa_raiz || '';
+    document.getElementById('ed-correccion').value = result.correccion_inmediata || '';
+    document.getElementById('ed-a1').value = result.acciones?.[0] || '';
+    document.getElementById('ed-a2').value = result.acciones?.[1] || '';
+    document.getElementById('ed-a3').value = result.acciones?.[2] || '';
+    document.getElementById('ed-verificacion').value = result.verificacion || '';
+    document.getElementById('ed-impacto').value = result.impacto_comercial || '';
+    document.getElementById('ed-borrador').value = result.borrador_cliente || '';
+    modal.style.display = 'flex';
+  }
+
+  function cerrarEditor() {
+    document.getElementById('edit-modal').style.display = 'none';
+  }
+
+  function guardarEdicion() {
+    result.causa_raiz = document.getElementById('ed-causa').value;
+    result.correccion_inmediata = document.getElementById('ed-correccion').value;
+    result.acciones = [
+      document.getElementById('ed-a1').value,
+      document.getElementById('ed-a2').value,
+      document.getElementById('ed-a3').value
+    ];
+    result.verificacion = document.getElementById('ed-verificacion').value;
+    result.impacto_comercial = document.getElementById('ed-impacto').value;
+    result.borrador_cliente = document.getElementById('ed-borrador').value;
+    cerrarEditor();
+    renderResult(currRec, result);
+    toast('Cambios guardados correctamente', true);
   }
 
   function toast(msg,ok){
