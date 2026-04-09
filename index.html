@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plataforma de Reclamos IA</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,600;1,300&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:#0d2137;--ocean:#1a3a5c;--accent:#00aacc;--ice:#7dd8f0;
+    --white:#ffffff;--text:#c8e4f0;--muted:#6a9ab8;
+    --warn:#e8a020;--danger:#e04040;--success:#20c070;--bg:#081929;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;min-height:100vh}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 50% at 15% 85%,rgba(26,58,92,.8) 0%,transparent 55%),radial-gradient(ellipse 50% 40% at 85% 15%,rgba(0,170,204,.08) 0%,transparent 50%);pointer-events:none;z-index:0}
+
+  .topbar{background:rgba(13,33,55,.95);backdrop-filter:blur(12px);border-bottom:1px solid rgba(0,170,204,.2);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:100}
+  .brand-logo{font-family:'Fraunces',serif;font-size:18px;font-weight:600;color:var(--white)}
+  .brand-logo span{color:var(--accent)}
+  .brand-mod{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-left:14px;padding-left:14px;border-left:1px solid rgba(0,170,204,.3)}
+  .tbadge{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;padding:4px 10px;border-radius:4px;text-transform:uppercase}
+  .b-iso{background:rgba(0,170,204,.1);border:1px solid rgba(0,170,204,.25);color:var(--accent)}
+  .b-demo{background:rgba(232,160,32,.1);border:1px solid rgba(232,160,32,.25);color:var(--warn);margin-left:8px}
+
+  .layout{display:grid;grid-template-columns:210px 1fr;min-height:calc(100vh - 54px);position:relative;z-index:1}
+  .sidebar{background:rgba(13,33,55,.7);border-right:1px solid rgba(0,170,204,.1);padding:20px 0}
+  .sb-sec{padding:0 12px;margin-bottom:20px}
+  .sb-lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:0 8px;margin-bottom:6px}
+  .nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;cursor:pointer;color:var(--muted);font-size:13px;transition:all .15s;border:none;background:none;width:100%;text-align:left;font-family:'DM Sans',sans-serif}
+  .nav-item:hover{background:rgba(0,170,204,.06);color:var(--text)}
+  .nav-item.active{background:rgba(0,170,204,.12);color:var(--accent)}
+  .nc{margin-left:auto;font-family:'DM Mono',monospace;font-size:10px;padding:2px 6px;border-radius:99px}
+  .nc-r{background:rgba(224,64,64,.15);color:var(--danger)}
+
+  .main{padding:24px 28px;overflow-y:auto}
+  .view{display:none}
+  .view.active{display:block;animation:fu .25s ease}
+  @keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  .ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px}
+  .ptitle{font-family:'Fraunces',serif;font-size:22px;font-weight:300;color:var(--white);margin-bottom:3px}
+  .psub{color:var(--muted);font-size:12px}
+
+  .srow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+  .sc{background:rgba(26,58,92,.4);border:1px solid rgba(0,170,204,.12);border-radius:10px;padding:16px 18px}
+  .slbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .sval{font-family:'Fraunces',serif;font-size:28px;font-weight:300;line-height:1;margin-bottom:4px}
+  .smeta{font-size:11px;color:var(--muted)}
+
+  .tw{background:rgba(13,33,55,.6);border:1px solid rgba(0,170,204,.12);border-radius:10px;overflow:hidden}
+  .ttb{padding:14px 18px;border-bottom:1px solid rgba(0,170,204,.1);display:flex;align-items:center;justify-content:space-between}
+  .ttitle{font-weight:500;font-size:13px;color:var(--white)}
+  .bp{padding:7px 14px;background:var(--accent);color:var(--navy);border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer}
+  .bp:hover{background:var(--ice)}
+  .bg{padding:7px 14px;background:transparent;color:var(--muted);border:1px solid rgba(0,170,204,.2);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer}
+  .bg:hover{background:rgba(0,170,204,.06);color:var(--text)}
+
+  table{width:100%;border-collapse:collapse}
+  th{text-align:left;padding:10px 18px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);background:rgba(8,25,41,.5);border-bottom:1px solid rgba(0,170,204,.1);font-weight:400}
+  td{padding:12px 18px;border-bottom:1px solid rgba(0,170,204,.06);font-size:13px;vertical-align:middle;color:var(--text)}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:rgba(0,170,204,.03);cursor:pointer}
+  .rc{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)}
+  .rd{max-width:260px;color:var(--white)}
+
+  .stag{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:500;white-space:nowrap}
+  .tnuevo{background:rgba(224,64,64,.15);color:var(--danger);border:1px solid rgba(224,64,64,.25)}
+  .tanalisis{background:rgba(232,160,32,.15);color:var(--warn);border:1px solid rgba(232,160,32,.25)}
+  .tresp{background:rgba(0,170,204,.12);color:var(--accent);border:1px solid rgba(0,170,204,.25)}
+  .tcerr{background:rgba(32,192,112,.12);color:var(--success);border:1px solid rgba(32,192,112,.25)}
+  .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+  .sla{font-family:'DM Mono',monospace;font-size:10px;padding:2px 7px;border-radius:4px}
+  .sok{background:rgba(32,192,112,.1);color:var(--success)}
+  .swarn{background:rgba(232,160,32,.1);color:var(--warn)}
+  .sbad{background:rgba(224,64,64,.1);color:var(--danger)}
+  .al{color:var(--accent);font-size:12px;cursor:pointer;font-weight:500}
+
+  /* FORM */
+  .fc{background:rgba(13,33,55,.7);border:1px solid rgba(0,170,204,.12);border-radius:10px;max-width:700px;overflow:hidden}
+  .fh{padding:18px 22px;border-bottom:1px solid rgba(0,170,204,.1)}
+  .ft{font-family:'Fraunces',serif;font-size:17px;font-weight:300;color:var(--white);margin-bottom:4px}
+  .fs{color:var(--muted);font-size:12px}
+  .fb{padding:22px}
+  .fg{margin-bottom:16px}
+  .fl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:block}
+  .fi,.fsel,.fta{width:100%;background:rgba(8,25,41,.7);border:1px solid rgba(0,170,204,.2);border-radius:6px;padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--white);outline:none;transition:border-color .15s}
+  .fi:focus,.fsel:focus,.fta:focus{border-color:rgba(0,170,204,.5)}
+  .fi::placeholder,.fta::placeholder{color:var(--muted)}
+  .fsel option{background:var(--navy)}
+  .fta{resize:none;line-height:1.5}
+  .ff{padding:14px 22px;border-top:1px solid rgba(0,170,204,.1);display:flex;gap:10px;justify-content:flex-end}
+
+  /* ANÁLISIS */
+  .aw{max-width:860px}
+
+  .ai-card{background:rgba(13,33,55,.8);border:1px solid rgba(0,170,204,.2);border-radius:12px;overflow:hidden;margin-bottom:20px}
+  .ai-hdr{display:flex;align-items:center;gap:12px;padding:16px 20px;background:rgba(0,170,204,.06);border-bottom:1px solid rgba(0,170,204,.12)}
+  .ai-av{width:36px;height:36px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:11px;color:var(--navy);font-weight:500;flex-shrink:0}
+  .ai-name{font-size:14px;font-weight:500;color:var(--white)}
+  .ai-role{font-size:11px;color:var(--muted);margin-top:1px}
+
+  .tsteps{padding:16px 20px;display:flex;flex-direction:column;gap:12px}
+  .tstep{display:flex;align-items:flex-start;gap:12px;animation:fu .4s ease}
+  .ticon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;margin-top:2px}
+  .ti-load{background:rgba(232,160,32,.15);border:1px solid rgba(232,160,32,.3);color:var(--warn);animation:pulse 1.5s infinite}
+  .ti-done{background:rgba(32,192,112,.15);border:1px solid rgba(32,192,112,.3);color:var(--success)}
+  @keyframes pulse{0%,100%{opacity:.7}50%{opacity:1}}
+  .tcont{flex:1}
+  .ttit{font-size:13px;color:var(--white);font-weight:500;margin-bottom:2px}
+  .tdet{font-size:11px;color:var(--muted);line-height:1.5;font-family:'DM Mono',monospace}
+  .tres{font-size:11px;color:var(--text);line-height:1.5;margin-top:5px;background:rgba(8,25,41,.5);padding:7px 10px;border-radius:5px;border-left:2px solid rgba(0,170,204,.4)}
+
+  /* RESULTADO */
+  .rc2{background:rgba(13,33,55,.8);border:1px solid rgba(0,170,204,.15);border-radius:12px;overflow:hidden}
+  .rh{padding:16px 20px;background:rgba(32,192,112,.06);border-bottom:1px solid rgba(32,192,112,.15);display:flex;align-items:center;justify-content:space-between}
+  .rtitle{font-family:'Fraunces',serif;font-size:16px;font-weight:300;color:var(--white)}
+  .rbadge{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;padding:4px 10px;border-radius:4px;background:rgba(32,192,112,.15);color:var(--success);border:1px solid rgba(32,192,112,.25)}
+  .rbody{padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .rlbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+  .rbox{padding:10px 13px;border-radius:7px;font-size:12px;line-height:1.6;color:var(--text);border:1px solid}
+  .bd{background:rgba(224,64,64,.07);border-color:rgba(224,64,64,.2);border-left:3px solid var(--danger)}
+  .bw{background:rgba(232,160,32,.07);border-color:rgba(232,160,32,.2);border-left:3px solid var(--warn)}
+  .ba{background:rgba(0,170,204,.07);border-color:rgba(0,170,204,.2);border-left:3px solid var(--accent)}
+  .bsuc{background:rgba(32,192,112,.07);border-color:rgba(32,192,112,.2);border-left:3px solid var(--success)}
+  .bn{background:rgba(26,58,92,.4);border-color:rgba(0,170,204,.1);border-left:3px solid var(--muted)}
+
+  .aitem{display:flex;gap:8px;margin-bottom:7px;font-size:12px;color:var(--text);padding:7px 10px;background:rgba(8,25,41,.5);border-radius:6px;border:1px solid rgba(0,170,204,.1);line-height:1.5}
+  .anum{font-family:'DM Mono',monospace;font-size:9px;color:var(--accent);flex-shrink:0;margin-top:2px;font-weight:500}
+
+  .ract{padding:14px 20px;border-top:1px solid rgba(0,170,204,.1);display:flex;gap:10px}
+  .bapp{padding:9px 16px;background:var(--success);color:white;border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer}
+  .bpdf{padding:9px 16px;background:transparent;border:1px solid rgba(0,170,204,.3);border-radius:6px;color:var(--accent);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer}
+  .bedit{padding:9px 16px;background:transparent;border:1px solid rgba(255,255,255,.1);border-radius:6px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer}
+
+  .rpill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:500;margin-right:5px}
+  .ph-r{background:rgba(224,64,64,.15);color:var(--danger);border:1px solid rgba(224,64,64,.25)}
+  .pm-r{background:rgba(232,160,32,.15);color:var(--warn);border:1px solid rgba(232,160,32,.25)}
+  .pl-r{background:rgba(32,192,112,.12);color:var(--success);border:1px solid rgba(32,192,112,.25)}
+
+  .draft{background:rgba(8,25,41,.6);border:1px solid rgba(0,170,204,.12);border-radius:7px;padding:12px 14px;font-size:12px;color:var(--text);line-height:1.7;font-style:italic}
+
+  .bkbtn{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:12px;cursor:pointer;margin-bottom:18px;background:none;border:none;padding:0;font-family:'DM Sans',sans-serif}
+  .bkbtn:hover{color:var(--text)}
+
+  .toast{position:fixed;bottom:22px;right:22px;padding:11px 16px;border-radius:8px;font-size:13px;display:none;z-index:999}
+  .toast.show{display:block;animation:fu .3s ease}
+  .tok{background:var(--success);color:#fff}
+  .terr{background:var(--danger);color:#fff}
+
+  ::-webkit-scrollbar{width:4px}
+  ::-webkit-scrollbar-thumb{background:rgba(0,170,204,.2);border-radius:99px}
+  @media(max-width:768px){.layout{grid-template-columns:1fr}.sidebar{display:none}.srow{grid-template-columns:1fr 1fr}.rbody{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div style="display:flex;align-items:center">
+    <div class="brand-logo">Procesus <span>IA</span></div>
+    <div class="brand-mod">Plataforma de Reclamos Inteligente</div>
+  </div>
+  <div><span class="tbadge b-iso">ISO 9001:2015</span><span class="tbadge b-demo">DEMO</span></div>
+</div>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="sb-sec">
+      <div class="sb-lbl">Gestión</div>
+      <button class="nav-item active" onclick="sv('dashboard',this)">▦ &nbsp;Dashboard</button>
+      <button class="nav-item" onclick="sv('lista',this)">≡ &nbsp;Reclamos <span class="nc nc-r" style="margin-left:auto">2</span></button>
+      <button class="nav-item" onclick="sv('nuevo',this)">+ &nbsp;Nuevo Reclamo</button>
+    </div>
+    <div class="sb-sec">
+      <div class="sb-lbl">Sistemas conectados</div>
+      <button class="nav-item">⬡ &nbsp;SAP S/4HANA</button>
+      <button class="nav-item">⬡ &nbsp;BigQuery</button>
+      <button class="nav-item">⬡ &nbsp;ISOTools</button>
+      <button class="nav-item">⬡ &nbsp;CRM</button>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div class="view active" id="view-dashboard">
+      <div class="ph">
+        <div><div class="ptitle">Dashboard de Reclamos</div><div class="psub">Área de Calidad · Industria del Salmón · Abril 2026</div></div>
+        <button class="bp" onclick="sv('nuevo',document.querySelectorAll('.nav-item')[2])">+ Nuevo Reclamo</button>
+      </div>
+      <div class="srow">
+        <div class="sc"><div class="slbl">Total reclamos</div><div class="sval" style="color:var(--white)">4</div><div class="smeta">↑ 1 esta semana</div></div>
+        <div class="sc"><div class="slbl">Sin análisis IA</div><div class="sval" style="color:var(--danger)">2</div><div class="smeta">Requieren atención</div></div>
+        <div class="sc"><div class="slbl">SLA promedio</div><div class="sval" style="color:var(--warn)">31h</div><div class="smeta">Meta: &lt;48h</div></div>
+        <div class="sc"><div class="slbl">Cerrados mes</div><div class="sval" style="color:var(--success)">2</div><div class="smeta">Prom. 22h</div></div>
+      </div>
+      <div class="tw">
+        <div class="ttb"><span class="ttitle">Reclamos recientes</span><button class="bg" onclick="sv('lista',document.querySelectorAll('.nav-item')[1])">Ver todos →</button></div>
+        <table>
+          <thead><tr><th>Código</th><th>Descripción</th><th>Cliente</th><th>Estado</th><th>SLA</th><th></th></tr></thead>
+          <tbody>
+            <tr onclick="od('R-2026-004')"><td class="rc">R-2026-004</td><td class="rd">Temperatura cadena de frío fuera de rango (-2°C vs -18°C)</td><td>Maruha Nichiro · Japón</td><td><span class="stag tnuevo"><span class="dot"></span>Nuevo</span></td><td><span class="sla sbad">42h</span></td><td><a class="al">Analizar →</a></td></tr>
+            <tr onclick="od('R-2026-003')"><td class="rc">R-2026-003</td><td class="rd">Calibre filete salmón Atlántico no conforme (280g vs 320g)</td><td>Sysco Foods · EE.UU.</td><td><span class="stag tanalisis"><span class="dot"></span>Analizando</span></td><td><span class="sla swarn">28h</span></td><td><a class="al">Ver →</a></td></tr>
+            <tr><td class="rc">R-2026-002</td><td class="rd">Listeria monocytogenes en salmón ahumado frío</td><td>Auchan · Francia</td><td><span class="stag tresp"><span class="dot"></span>Resp. enviada</span></td><td><span class="sla sok">18h</span></td><td><a class="al">Ver →</a></td></tr>
+            <tr><td class="rc">R-2026-001</td><td class="rd">Etiquetado incorrecto fecha vencimiento UE</td><td>Carrefour · España</td><td><span class="stag tcerr"><span class="dot"></span>Cerrado</span></td><td><span class="sla sok">14h</span></td><td><a class="al">Ver →</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- LISTA -->
+    <div class="view" id="view-lista">
+      <div class="ph">
+        <div><div class="ptitle">Reclamos</div><div class="psub">ISO 9001:2015 · Cláusula 8.2.1 · 4 registros</div></div>
+        <button class="bp" onclick="sv('nuevo',document.querySelectorAll('.nav-item')[2])">+ Nuevo</button>
+      </div>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Código</th><th>Descripción</th><th>Cliente</th><th>Tipo</th><th>Estado</th><th>SLA</th><th></th></tr></thead>
+          <tbody>
+            <tr onclick="od('R-2026-004')"><td class="rc">R-2026-004</td><td class="rd">Temperatura cadena de frío fuera de rango</td><td>Maruha Nichiro · Japón</td><td style="font-size:11px;color:var(--muted)">Inocuidad</td><td><span class="stag tnuevo"><span class="dot"></span>Nuevo</span></td><td><span class="sla sbad">42h</span></td><td><a class="al">Analizar →</a></td></tr>
+            <tr onclick="od('R-2026-003')"><td class="rc">R-2026-003</td><td class="rd">Calibre filete no conforme especificación</td><td>Sysco Foods · EE.UU.</td><td style="font-size:11px;color:var(--muted)">Calidad</td><td><span class="stag tanalisis"><span class="dot"></span>Analizando</span></td><td><span class="sla swarn">28h</span></td><td><a class="al">Ver →</a></td></tr>
+            <tr><td class="rc">R-2026-002</td><td class="rd">Listeria en lote salmón ahumado</td><td>Auchan · Francia</td><td style="font-size:11px;color:var(--muted)">Inocuidad</td><td><span class="stag tresp"><span class="dot"></span>Resp. enviada</span></td><td><span class="sla sok">18h</span></td><td></td></tr>
+            <tr><td class="rc">R-2026-001</td><td class="rd">Etiquetado fecha vencimiento incorrecto</td><td>Carrefour · España</td><td style="font-size:11px;color:var(--muted)">Etiquetado</td><td><span class="stag tcerr"><span class="dot"></span>Cerrado</span></td><td><span class="sla sok">14h</span></td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- NUEVO -->
+    <div class="view" id="view-nuevo">
+      <button class="bkbtn" onclick="sv('lista',document.querySelectorAll('.nav-item')[1])">← Volver</button>
+      <div class="fc">
+        <div class="fh">
+          <div class="ft">Registrar Reclamo · La IA analiza automáticamente</div>
+          <div class="fs">Ingresa los datos del reclamo y el número de lote. El agente IA consultará SAP, BigQuery, CRM e ISOTools y entregará el análisis completo en segundos — sin que tengas que buscar datos en ningún área.</div>
+        </div>
+        <div class="fb">
+          <div class="fg">
+            <label class="fl">Descripción del reclamo *</label>
+            <textarea class="fta" rows="3" id="nd" placeholder="Describe el reclamo. Ej: 'Lote de salmón Atlántico llegó con temperatura de -2°C, muy por encima del límite de -18°C...'"></textarea>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div class="fg"><label class="fl">Número de lote *</label><input class="fi" type="text" id="nl" placeholder="Ej: L-2026-047" /></div>
+            <div class="fg"><label class="fl">Cliente / Mercado *</label><input class="fi" type="text" id="nc" placeholder="Ej: Maruha Nichiro · Japón" /></div>
+            <div class="fg">
+              <label class="fl">Tipo de reclamo *</label>
+              <select class="fsel" id="nt">
+                <option value="">Seleccionar...</option>
+                <option>Inocuidad / Microbiología</option>
+                <option>Cadena de frío / Temperatura</option>
+                <option>Calidad / Calibre / Rendimiento</option>
+                <option>Etiquetado / Trazabilidad</option>
+                <option>Peso / Gramaje</option>
+                <option>Sensorial / Olor / Color</option>
+                <option>Empaque / Daño físico</option>
+                <option>Documentación / Certificados</option>
+                <option>Logística / Entrega</option>
+              </select>
+            </div>
+            <div class="fg"><label class="fl">Volumen afectado</label><input class="fi" type="text" id="nv" placeholder="Ej: 3 pallets · 2.400 kg" /></div>
+          </div>
+        </div>
+        <div class="ff">
+          <button class="bg" onclick="sv('lista',document.querySelectorAll('.nav-item')[1])">Cancelar</button>
+          <button class="bp" onclick="registrar()">Registrar → La IA analiza ahora</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANÁLISIS -->
+    <div class="view" id="view-analisis">
+      <button class="bkbtn" onclick="sv('lista',document.querySelectorAll('.nav-item')[1])">← Volver</button>
+      <div class="aw">
+        <div class="ph">
+          <div><div class="ptitle" id="an-title">Análisis IA · R-2026-004</div><div class="psub" id="an-sub">Maruha Nichiro · Japón</div></div>
+          <span class="stag tanalisis" id="an-st"><span class="dot"></span>Analizando</span>
+        </div>
+
+        <div class="ai-card" id="thinking-card">
+          <div class="ai-hdr">
+            <div class="ai-av">IA</div>
+            <div><div class="ai-name">Agente Procesus IA</div><div class="ai-role" id="ai-role-txt">Consultando sistemas internos · Analizando lote y trazabilidad</div></div>
+            <div id="spin" style="margin-left:auto;font-family:'DM Mono',monospace;font-size:10px;color:var(--warn)">● procesando...</div>
+          </div>
+          <div class="tsteps" id="tsteps"></div>
+        </div>
+
+        <div id="result-sec" style="display:none;animation:fu .5s ease">
+          <div class="rc2">
+            <div class="rh">
+              <div class="rtitle">Análisis completo · Listo para revisión del área de Calidad</div>
+              <div class="rbadge">✓ Generado en <span id="etime">12s</span></div>
+            </div>
+            <div class="rbody" id="rbody"></div>
+            <div style="padding:0 20px 20px" id="dsec"></div>
+            <div class="ract">
+              <button class="bapp" onclick="aprobar()">✓ Aprobar y enviar al cliente</button>
+              <button class="bpdf" onclick="exportPDF()">↓ Descargar informe PDF</button>
+              <button class="bedit">Editar manualmente</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const db = {
+    'R-2026-004':{ code:'R-2026-004',lote:'L-2026-047',client:'Maruha Nichiro · Japón',tipo:'Cadena de frío / Temperatura',volumen:'3 pallets · 2.400 kg',desc:'Lote de salmón Atlántico congelado llegó a destino con temperatura de -2°C, muy por encima del límite crítico de -18°C estipulado en el contrato de exportación. El cliente reporta compromiso de 3 pallets y solicita respuesta formal en 48 horas.' },
+    'R-2026-003':{ code:'R-2026-003',lote:'L-2026-039',client:'Sysco Foods · EE.UU.',tipo:'Calidad / Calibre / Rendimiento',volumen:'5 pallets · 4.000 kg',desc:'Salmón Atlántico filete IQF presentó calibre promedio de 280g vs 320g especificado en contrato. Cliente rechazó 5 pallets y solicita nota de crédito más reposición del pedido.' }
+  };
+
+  let currRec = null, result = null, t0 = null;
+
+  function sv(n,btn) {
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+    document.getElementById('view-'+n).classList.add('active');
+    if(btn) btn.classList.add('active');
+  }
+
+  function od(code) {
+    const r = db[code]; if(!r) return;
+    currRec = r; result = null; t0 = Date.now();
+    document.getElementById('an-title').textContent = 'Análisis IA · ' + r.code;
+    document.getElementById('an-sub').textContent = r.client + ' · ' + r.tipo;
+    document.getElementById('an-st').innerHTML = `<span class="dot"></span>Analizando`;
+    document.getElementById('an-st').className = 'stag tanalisis';
+    document.getElementById('result-sec').style.display = 'none';
+    document.getElementById('thinking-card').style.display = 'block';
+    document.getElementById('spin').style.display = 'block';
+    document.getElementById('tsteps').innerHTML = '';
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    document.getElementById('view-analisis').classList.add('active');
+    runAnalysis(r);
+  }
+
+  function registrar() {
+    const desc=document.getElementById('nd').value.trim();
+    const lote=document.getElementById('nl').value.trim();
+    const client=document.getElementById('nc').value.trim();
+    const tipo=document.getElementById('nt').value;
+    if(!desc||!lote||!client||!tipo){toast('Completa los campos obligatorios',false);return;}
+    const code='R-2026-0'+Math.floor(Math.random()*90+10);
+    db[code]={code,lote,client,tipo,volumen:document.getElementById('nv').value||'No especificado',desc};
+    toast('Reclamo registrado · La IA inicia el análisis',true);
+    setTimeout(()=>od(code),400);
+  }
+
+  const steps = [
+    {title:'Consultando SAP S/4HANA',det:'Buscando lote {L}...',res:'Lote {L} encontrado · Planta Puerto Montt, Línea 3 · 28/03/2026 · Salmón Atlántico · Destino: {C} · Estado: Despachado (GD 4501089234)',ms:1200},
+    {title:'Consultando BigQuery · Trazabilidad de temperatura',det:'Recuperando registros de temperatura en tránsito...',res:'18 mediciones · Salida planta: -20.4°C ✓ · Puerto San Antonio: -19.1°C ✓ · Bodega transitaria: -5.2°C ⚠ · Entrega cliente: -2.0°C ✗ · Ruptura detectada en tramo Puerto San Antonio → bodega transitaria',ms:2000},
+    {title:'Consultando CRM · Historial del cliente',det:'Revisando historial de reclamos y contrato vigente...',res:'Cliente categoría A (exportación premium) · Sin reclamos previos 2024-2025 · Contrato: temperatura mínima -18°C · SLA respuesta: 48h · Impacto comercial estimado: UF 180',ms:1500},
+    {title:'Consultando ISOTools · Antecedentes normativos',det:'Revisando NC previas relacionadas con cadena de frío...',res:'NC-2025-112 (oct. 2025): mismo origen, mismo proveedor logístico (Transportes del Sur) · Acción correctiva anterior: CERRADA · Estado real: insuficiente → recurrencia confirmada',ms:1800},
+    {title:'Motor IA · Análisis causal automatizado',det:'Cruzando datos de temperatura, trazabilidad y antecedentes...',res:'Causa raíz probable: falla en equipo de frío de Transportes del Sur durante ~6 horas en tramo PSA → bodega transitaria. NC previa confirma recurrencia. Acción correctiva de oct-2025 fue insuficiente.',ms:2200},
+    {title:'Generando plan de acción y borrador al cliente',det:'Redactando acciones correctivas y carta de respuesta formal...',res:'✓ Plan de acción generado (3 acciones) · Borrador de respuesta al cliente redactado · Informe listo para aprobación del área de Calidad',ms:1400}
+  ];
+
+  async function runAnalysis(r) {
+    const c = document.getElementById('tsteps');
+    for(let i=0;i<steps.length;i++){
+      const s=steps[i];
+      const det=s.det.replace('{L}',r.lote).replace('{C}',r.client);
+      const res=s.res.replace('{L}',r.lote).replace('{C}',r.client);
+      const d=document.createElement('div');
+      d.className='tstep'; d.id='ts-'+i;
+      d.innerHTML=`<div class="ticon ti-load" id="ic-${i}">⟳</div><div class="tcont"><div class="ttit">${s.title}</div><div class="tdet" id="td-${i}">${det}</div></div>`;
+      c.appendChild(d); c.scrollTop=c.scrollHeight;
+      await dl(s.ms);
+      document.getElementById('ic-'+i).className='ticon ti-done';
+      document.getElementById('ic-'+i).textContent='✓';
+      const rv=document.createElement('div'); rv.className='tres'; rv.textContent=res;
+      document.getElementById('ts-'+i).querySelector('.tcont').appendChild(rv);
+      c.scrollTop=c.scrollHeight;
+    }
+    await genResult(r);
+  }
+
+  function dl(ms){return new Promise(r=>setTimeout(r,ms))}
+
+  async function genResult(r) {
+    const elapsed=Math.round((Date.now()-t0)/1000);
+    document.getElementById('etime').textContent=elapsed+'s';
+
+    const prompt=`Eres el agente IA de gestión de reclamos de la empresa, empresa salmonera chilena. Ya consultaste todos los sistemas. Genera el análisis completo.
+
+Reclamo: ${r.code} · Lote: ${r.lote} · Cliente: ${r.client} · Tipo: ${r.tipo} · Volumen: ${r.volumen}
+Descripción: ${r.desc}
+
+Datos de sistemas:
+- SAP: Producción planta Puerto Montt 28/03/2026, despachado GD-4501089234
+- BigQuery: Temperatura ok en planta (-20.4°C) y Puerto San Antonio (-19.1°C). Ruptura en tramo transitaria (-5.2°C). Entrega -2°C.
+- CRM: Cliente premium categoría A, sin reclamos previos, SLA 48h, impacto UF 180
+- ISOTools: NC similar oct-2025 con Transportes del Sur, acción correctiva cerrada pero insuficiente → recurrencia
+
+Responde SOLO en JSON válido:
+{"riesgo":"Alto|Medio|Bajo","causa_raiz":"string","correccion_inmediata":"string","acciones":["A1","A2","A3"],"verificacion":"string","impacto_comercial":"string","borrador_cliente":"string 2-3 párrafos formales"}`;
+
+    let res = await callAI(prompt);
+    if(!res) res = fallback(r);
+    result = res;
+    renderResult(r, res);
+  }
+
+  async function callAI(prompt) {
+    try {
+      const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,messages:[{role:'user',content:prompt}]})});
+      if(!r.ok) return null;
+      const data=await r.json();
+      let t=data.content?.[0]?.text||'{}';
+      t=t.replace(/```json|```/g,'').trim();
+      return JSON.parse(t);
+    } catch{return null}
+  }
+
+  function fallback(r) {
+    return {
+      riesgo:'Alto',
+      causa_raiz:`Falla en equipo de refrigeración del proveedor logístico Transportes del Sur durante el tramo Puerto San Antonio → bodega transitaria (aprox. 6 horas). La temperatura ascendió de -19.1°C a -5.2°C comprometiendo la inocuidad de ${r.volumen} del lote ${r.lote}. Se confirma recurrencia de la NC-2025-112 de octubre 2025: la acción correctiva aplicada entonces fue insuficiente para prevenir la reincidencia con el mismo proveedor.`,
+      correccion_inmediata:`Bloquear lote ${r.lote} en SAP e ISOTools de forma inmediata. Notificar a ${r.client} con reconocimiento formal del incidente y compromiso de respuesta en 24 horas. Solicitar contramuestras del lote al cliente para análisis microbiológico de inocuidad. Iniciar proceso de nota de crédito y reposición de ${r.volumen}.`,
+      acciones:[
+        `Suspender de inmediato los contratos de despacho con Transportes del Sur hasta su re-calificación formal bajo cláusula 8.4.1 ISO 9001:2015. Plazo: inmediato. Responsable: Jefe de Logística.`,
+        `Implementar sistema de monitoreo GPS de temperatura en tiempo real con alertas automáticas (umbral -16°C) para todos los embarques de exportación. Plazo: 30 días. Responsable: TI + Logística.`,
+        `Actualizar procedimiento PR-LOG-003 incorporando verificación obligatoria de equipos de frío antes de cada despacho internacional y registro firmado por transportista. Plazo: 15 días. Responsable: Calidad.`
+      ],
+      verificacion:`Auditoría de proveedores logísticos en 60 días. Revisión mensual de registros de temperatura en tránsito durante 3 meses consecutivos. KPI: 0 reclamos por cadena de frío en Q3 2026. Revisión por la dirección (cláusula 9.3) en mayo 2026.`,
+      impacto_comercial:`Estimado UF 180 (nota de crédito + reposición de ${r.volumen}). Riesgo adicional: posible revisión del contrato anual con ${r.client} si el incidente no se gestiona dentro del SLA de 48h. Riesgo certificación de exportación a Japón si el incidente se repite.`,
+      borrador_cliente:`Estimados señores ${r.client.split('·')[0].trim()},\n\nEn nombre de la empresa, lamentamos profundamente el incidente ocurrido con el lote ${r.lote}. Tras un análisis exhaustivo de los sistemas de trazabilidad y temperatura, hemos identificado una ruptura de la cadena de frío en el tramo de transporte terrestre hacia la bodega transitaria, atribuible a una falla en el equipo del proveedor logístico. Hemos tomado acción inmediata suspendiendo dicho proveedor.\n\nEn los próximos 5 días hábiles les haremos llegar la nota de crédito correspondiente y la propuesta de reposición del pedido. Paralelamente, hemos iniciado la implementación de un sistema de monitoreo de temperatura GPS en tiempo real para todos los embarques de exportación, garantizando la integridad de la cadena de frío desde nuestra planta hasta el destino final.\n\nQuedamos a su entera disposición para cualquier consulta adicional y reiteramos nuestro compromiso de calidad e inocuidad en cada despacho.`
+    };
+  }
+
+  function renderResult(r, res) {
+    document.getElementById('spin').style.display='none';
+    document.getElementById('ai-role-txt').textContent='Análisis completado · Listo para revisión y aprobación';
+    document.getElementById('an-st').innerHTML=`<span class="dot"></span>Análisis listo`;
+    document.getElementById('an-st').className='stag tcerr';
+
+    const rc=res.riesgo==='Alto'?'ph-r':res.riesgo==='Medio'?'pm-r':'pl-r';
+
+    document.getElementById('rbody').innerHTML=`
+      <div>
+        <div class="rlbl">⚠ Causa raíz identificada <span class="rpill ${rc}">${res.riesgo}</span></div>
+        <div class="rbox bd">${res.causa_raiz}</div>
+      </div>
+      <div>
+        <div class="rlbl">⚡ Corrección inmediata</div>
+        <div class="rbox bw">${res.correccion_inmediata}</div>
+      </div>
+      <div style="grid-column:1/-1">
+        <div class="rlbl">✦ Acciones correctivas · Cláusula 10.2.1.c ISO 9001</div>
+        ${res.acciones.map((a,i)=>`<div class="aitem"><div class="anum">A${i+1}</div><div>${a}</div></div>`).join('')}
+      </div>
+      <div>
+        <div class="rlbl">✓ Verificación de eficacia</div>
+        <div class="rbox bsuc">${res.verificacion}</div>
+      </div>
+      <div>
+        <div class="rlbl">💰 Impacto comercial estimado</div>
+        <div class="rbox bn">${res.impacto_comercial}</div>
+      </div>`;
+
+    document.getElementById('dsec').innerHTML=`
+      <div class="rlbl" style="margin-bottom:8px">✉ Borrador de respuesta al cliente · listo para envío</div>
+      <div class="draft">${res.borrador_cliente.replace(/\n/g,'<br>')}</div>`;
+
+    document.getElementById('result-sec').style.display='block';
+    setTimeout(()=>document.getElementById('result-sec').scrollIntoView({behavior:'smooth',block:'start'}),100);
+  }
+
+  function aprobar(){toast('Análisis aprobado · Respuesta enviada al cliente',true)}
+
+  function exportPDF() {
+    if(!result||!currRec){toast('Espera que termine el análisis',false);return}
+    const r=result,rec=currRec;
+    const fecha=new Date().toLocaleDateString('es-CL',{year:'numeric',month:'long',day:'numeric'});
+    const html=`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Análisis ${rec.code}</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Arial,sans-serif;font-size:12px;color:#1a2940;background:white;padding:40px}.header{display:flex;justify-content:space-between;margin-bottom:28px;padding-bottom:16px;border-bottom:2px solid #1a3a5c}.brand{font-size:20px;font-weight:700;color:#1a3a5c}.meta{text-align:right;font-size:10px;color:#666;line-height:1.7}h1{font-size:17px;font-weight:700;margin-bottom:4px;color:#1a3a5c}.sub{font-size:12px;color:#666;margin-bottom:20px}.sec{margin-bottom:16px}.stit{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#888;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #e0e8f0}.box{padding:10px 14px;border-radius:4px;font-size:12px;line-height:1.6;border:1px solid}.bd{background:#fff5f5;border-color:#fca5a5;border-left:3px solid #dc2626}.bw{background:#fffbeb;border-color:#fcd34d;border-left:3px solid #d97706}.bsuc{background:#f0fdf4;border-color:#86efac;border-left:3px solid #16a34a}.bn{background:#f7f7f7;border-color:#e0e0e0;border-left:3px solid #888}.bb{background:#eff6ff;border-color:#bfdbfe;border-left:3px solid #1a3a5c}.ig{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#e0e8f0;border:1px solid #e0e8f0;margin-bottom:16px}.ic{background:white;padding:10px 12px}.il{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:3px}.iv{font-size:12px;font-weight:500}table{width:100%;border-collapse:collapse}th{padding:8px 12px;background:#1a3a5c;color:white;text-align:left;font-size:10px}td{padding:8px 12px;border:1px solid #e0e8f0;vertical-align:top}.rp{display:inline-block;padding:2px 10px;border-radius:99px;font-size:10px;font-weight:600;background:#fff5f5;color:#dc2626;border:1px solid #fca5a5}.sa{margin-top:36px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:28px}.sb{border-top:1px solid #ccc;padding-top:8px;text-align:center;font-size:10px;color:#888;line-height:1.8}.footer{margin-top:20px;padding-top:10px;border-top:1px solid #e0e8f0;display:flex;justify-content:space-between;font-size:9px;color:#888}</style></head><body>
+<div class="header"><div><div class="brand">Plataforma de Reclamos IA</div><div style="font-size:10px;color:#666;margin-top:2px">Plataforma Inteligente · ISO 9001:2015 · Análisis automático</div></div><div class="meta"><div><strong>Código:</strong> ${rec.code}</div><div><strong>Lote:</strong> ${rec.lote}</div><div><strong>Fecha:</strong> ${fecha}</div></div></div>
+<h1>Informe de Análisis de Reclamo · Generado automáticamente por IA</h1><div class="sub">${rec.tipo} · ${rec.client}</div>
+<div class="sec"><div class="stit">Datos del reclamo</div><div class="ig"><div class="ic"><div class="il">Código</div><div class="iv">${rec.code}</div></div><div class="ic"><div class="il">Lote</div><div class="iv">${rec.lote}</div></div><div class="ic"><div class="il">Cliente</div><div class="iv">${rec.client}</div></div><div class="ic"><div class="il">Volumen</div><div class="iv">${rec.volumen}</div></div></div><div class="box bn">${rec.desc}</div></div>
+<div class="sec"><div class="stit">Riesgo identificado <span class="rp">${r.riesgo}</span></div><div class="box bd" style="margin-top:8px">${r.causa_raiz}</div></div>
+<div class="sec"><div class="stit">Corrección inmediata · Cláusula 10.2.1.a</div><div class="box bw" style="margin-top:8px">${r.correccion_inmediata}</div></div>
+<div class="sec"><div class="stit">Acciones correctivas · Cláusula 10.2.1.c</div><table style="margin-top:8px"><thead><tr><th style="width:36px">#</th><th>Acción</th></tr></thead><tbody>${r.acciones.map((a,i)=>`<tr><td style="text-align:center;font-weight:700;color:#1a3a5c;background:#eff6ff">A${i+1}</td><td>${a}</td></tr>`).join('')}</tbody></table></div>
+<div class="sec"><div class="stit">Verificación de eficacia · Cláusula 10.2.1.d</div><div class="box bsuc" style="margin-top:8px">${r.verificacion}</div></div>
+<div class="sec"><div class="stit">Impacto comercial estimado</div><div class="box bn" style="margin-top:8px">${r.impacto_comercial}</div></div>
+<div class="sec"><div class="stit">Borrador de respuesta al cliente</div><div class="box bb" style="margin-top:8px;font-style:italic">${r.borrador_cliente.replace(/\n/g,'<br>')}</div></div>
+<div class="sa"><div class="sb">Revisado por<br><br>&nbsp;<br>Área de Calidad</div><div class="sb">Aprobado por<br><br>&nbsp;<br>Jefe de Calidad</div><div class="sb">Enviado por<br><br>&nbsp;<br>Gerencia Comercial</div></div>
+<div class="footer"><span>Generado por Procesus IA · Procesus · ${fecha}</span><span>ISO 9001:2015 · Análisis automático · Documento controlado</span></div>
+</body></html>`;
+    const win=window.open('','_blank');
+    if(!win){toast('Permite ventanas emergentes',false);return}
+    win.document.write(html);win.document.close();win.focus();
+    setTimeout(()=>win.print(),700);
+  }
+
+  function toast(msg,ok){
+    const t=document.getElementById('toast');
+    t.textContent=msg;t.className='toast show '+(ok?'tok':'terr');
+    setTimeout(()=>t.className='toast',2800);
+  }
+</script>
+</body>
+</html>
